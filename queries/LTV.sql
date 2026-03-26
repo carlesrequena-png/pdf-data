@@ -6,18 +6,43 @@ SELECT
 	TO_CHAR(MIN(t.payment_date),'YYYY-MM') AS cohort,				
 	MAX(t.payment_date) AS latest_payment_date,				
 	CASE WHEN (s.unsubscribed_date IS not null or s.subscription_status = 'Unsuscribed') THEN 'churned' ELSE 'active' END AS status,
-	CASE WHEN utm_term like '%free%' then 'free' else 'other' end as keyword
-FROM subscriptions s				
-LEFT JOIN subscription_types st				
+	CASE WHEN utm_term like '%free%' then 'free' else 'other' end as keyword,
+	p2.sub_product,
+	LOWER(SPLIT_PART(c.email, '@', 2)) AS email_domain,
+    CASE 
+        WHEN LOWER(SPLIT_PART(c.email, '@', 2)) IN (
+        -- principales
+        'gmail.com','yahoo.com','ymail.com','myyahoo.com',
+        'hotmail.com','hotmail.es',
+        'outlook.com','outlook.com.au','live.com',
+        'icloud.com','me.com','mac.com',
+        'aol.com','msn.com',
+        -- otros providers
+        'protonmail.com','proton.me',
+        'mail.com','gmx.com','mailfence.com','fastmail.com',
+        -- ISPs (también B2C)
+        'comcast.net','verizon.net','att.net','bellsouth.net',
+        'sbcglobal.net','earthlink.net','frontier.com',
+        'cox.net','charter.net','windstream.net',
+        'netzero.net','pacbell.net','prodigy.net',
+        -- internacionales / raros
+        '126.com','mail.ru','hushmail.com'
+        ) THEN 'B2C' 
+        ELSE 'B2B' 
+    END AS user_segment
+FROM pdfeditor.subscriptions s	
+left join pdfeditor.products p2
+on p2.id = s.product_id 
+LEFT JOIN pdfeditor.subscription_types st				
     ON st.id = s.subscription_type_id				
-LEFT JOIN prices p				
+LEFT JOIN pdfeditor.prices p				
     ON p.id = st.price_id				
-LEFT JOIN transactions t				
+LEFT JOIN pdfeditor.transactions t				
     ON t.subscription_id = s.id				
 AND t.transaction_status = 1
-left join utms u 
+left join pdfeditor.utms u 
     on u.id = t.utms_id 
-JOIN customers c				
+JOIN pdfeditor.customers c				
     ON c.id = s.customer_id_np				
     and c.email not like '%leadtech%'				
 where s.subscription_status != 'Registered'		
@@ -26,7 +51,10 @@ where s.subscription_status != 'Registered'
 GROUP BY				
     s.id,				
     s.unsubscribed_date,
-    keyword
+    keyword,
+    p2.sub_product,
+    email_domain,
+    user_segment
 having				
     SUM(CASE WHEN t.transaction_type = 0 THEN 1 ELSE 0 END) - coalesce((SUM(CASE WHEN t.transaction_type = 1 THEN 1 ELSE 0 END)),0) > 0				
-    and s.id not in ('25', '26','27','28')		
+    and s.id not in ('25', '26','27','28')	

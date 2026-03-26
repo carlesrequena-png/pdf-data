@@ -7,16 +7,16 @@ select
     replace(replace(r.comment, chr(10), ' '), chr(13), ' ') as comment,	
     s.subscription_status,	
     st.name	
-from reviews r	
-left join customers c	
+from pdfeditor.reviews r	
+left join pdfeditor.customers c	
     on r.email = c.email	
 left join (	
     select distinct on (customer_id_np) *	
-    from subscriptions	
+    from pdfeditor.subscriptions	
     order by customer_id_np, created_at desc	
 ) s	
     on s.customer_id_np = c.id	
-left join subscription_types st	
+left join pdfeditor.subscription_types st	
     on st.id = s.subscription_type_id	
 where 
     r.created_at > '2026-02-03'	
