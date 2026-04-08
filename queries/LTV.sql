@@ -11,21 +11,21 @@ SELECT
 	LOWER(SPLIT_PART(c.email, '@', 2)) AS email_domain,
     CASE 
         WHEN LOWER(SPLIT_PART(c.email, '@', 2)) IN (
-        -- principales
+       
         'gmail.com','yahoo.com','ymail.com','myyahoo.com',
         'hotmail.com','hotmail.es',
         'outlook.com','outlook.com.au','live.com',
         'icloud.com','me.com','mac.com',
         'aol.com','msn.com',
-        -- otros providers
+        
         'protonmail.com','proton.me',
         'mail.com','gmx.com','mailfence.com','fastmail.com',
-        -- ISPs (también B2C)
+       
         'comcast.net','verizon.net','att.net','bellsouth.net',
         'sbcglobal.net','earthlink.net','frontier.com',
         'cox.net','charter.net','windstream.net',
         'netzero.net','pacbell.net','prodigy.net',
-        -- internacionales / raros
+        
         '126.com','mail.ru','hushmail.com'
         ) THEN 'B2C' 
         ELSE 'B2B' 
