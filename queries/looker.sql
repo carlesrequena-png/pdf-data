@@ -23,7 +23,8 @@ select
 		END AS ltv,
 	  	(SUM(CASE WHEN t.transaction_type = 0 THEN t.amount ELSE 0 END) - COALESCE(SUM(CASE WHEN t.transaction_type = 1 THEN t.amount ELSE 0 END), 0))::BIGINT AS user_revenue,
 	  	--SUM(CASE WHEN t.transaction_type = 0 and t.amount >5 then 1 else 0 end) - coalesce((SUM(CASE WHEN t.transaction_type = 1 and t.amount >5 then 1 else 0 end)),0) AS recurrences,
-	  	sum(case when t.transaction_type = 1 then 1 else 0 end) as refunds
+	  	sum(case when t.transaction_type = 1 then 1 else 0 end) as refunds,
+	  	COALESCE(SUM(CASE WHEN t.transaction_type = 1 THEN t.amount ELSE 0 END), 0)::BIGINT AS amount_refunds
 	from customers c
 	left join transactions t 
 	on t.customer_id = c.id
