@@ -1,9 +1,9 @@
 select  
-	    count(t.*) as sales,
-	    t.created_at::date as date,
-	    c.ip_country, 
-	    concat(extract(year FROM t.created_at),'-W',extract(week FROM t.created_at)) as week,
-	    CASE
+	  	SUM(case when t.transaction_type = 0 and t.amount <5 then 1 else 0 end) as sales,
+	  	t.created_at::date as date,
+	  	c.ip_country,
+	  	concat(extract(year FROM t.created_at),'-W',extract(week FROM t.created_at)) as week,
+	  	CASE
 		    WHEN ip_country = 'AU' THEN '98,88'
 		    WHEN ip_country = 'ES' THEN '101,60'
 		    WHEN ip_country = 'DE' THEN '115,02'
@@ -20,7 +20,10 @@ select
 		    WHEN ip_country = 'PH' THEN '45,72'
 		    WHEN ip_country = 'IN' THEN '19,22'
 		    ELSE '101,60'
-		END AS ltv
+		END AS ltv,
+	  	(SUM(CASE WHEN t.transaction_type = 0 THEN t.amount ELSE 0 END) - COALESCE(SUM(CASE WHEN t.transaction_type = 1 THEN t.amount ELSE 0 END), 0))::BIGINT AS user_revenue,
+	  	--SUM(CASE WHEN t.transaction_type = 0 and t.amount >5 then 1 else 0 end) - coalesce((SUM(CASE WHEN t.transaction_type = 1 and t.amount >5 then 1 else 0 end)),0) AS recurrences,
+	  	sum(case when t.transaction_type = 1 then 1 else 0 end) as refunds
 	from customers c
 	left join transactions t 
 	on t.customer_id = c.id
@@ -33,10 +36,8 @@ select
 	left join subscription_types st
 	on st.id = s.subscription_type_id 
 	where 
-	t.created_at::date >= '2026-02-01'
-	and email not like '%leadtech%'
-	and t.transaction_status = 1
-	and t.transaction_type = 0
-	and t.amount <5
-	and is2.invoice_number is not null
-	group by 2,3,4,5
+		t.created_at::date >= '2026-01-01'
+		and email not like '%leadtech%'
+		and t.transaction_status = 1
+		and is2.invoice_number is not null
+	group by 2,3,4
