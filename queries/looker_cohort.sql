@@ -54,6 +54,7 @@ select
 	week,
 	sum(user_revenue) as revenue,
 	SUM(CASE WHEN recurrences >0 then 1 else 0 end) as renewal,
+	SUM(CASE WHEN recurrences >1 then 1 else 0 end) as renewal_2,
 	sum (refunds) as refunds
 from recurrences
 group by 2,3,4

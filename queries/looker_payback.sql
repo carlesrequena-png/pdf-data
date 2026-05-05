@@ -4,8 +4,25 @@ with
 		    s.id,
 		    t.created_at::date as cohort_date,
 		   	c.ip_country,
-		   	p.amount as amount_recurrence,
-		   	p.amount_trial
+			-- Conversion amount_recurrence
+		   	p.amount * CASE 
+                WHEN p.currency = 'EUR' THEN 1.0
+                WHEN p.currency = 'AUD' THEN 0.61124
+                WHEN p.currency = 'USD' THEN 0.85614
+                WHEN p.currency = 'CAD' THEN 0.628425
+                WHEN p.currency = 'GBP' THEN 1.157
+                ELSE 1.0 
+            END AS amount_recurrence,
+            -- Conversión de amount_trial
+		   	p.amount_trial * CASE 
+                WHEN p.currency = 'EUR' THEN 1.0
+                WHEN p.currency = 'AUD' THEN 0.61124
+                WHEN p.currency = 'USD' THEN 0.85614
+                WHEN p.currency = 'CAD' THEN 0.628425
+                WHEN p.currency = 'GBP' THEN 1.157
+                ELSE 1.0 
+            END AS amount_trial,
+		   	p.currency
 		FROM pdfeditor.customers c
         LEFT JOIN pdfeditor.transactions t ON t.customer_id = c.id
         LEFT JOIN pdfeditor.invoices_sii is2 ON is2.transaction_id = t.id
@@ -86,3 +103,17 @@ with
 		LEFT JOIN historical_ratios hr ON hr.ip_country = ua.ip_country
 		where ua.ip_country is not null
 		GROUP BY 1, 2
+
+
+
+--=SUSTITUIR(F2;".";",")*1
+		
+
+		
+EUR - 1
+AUD - 0,61124
+USD - 0,85614
+CAD - 0,628425
+GBP - 1,157
+
+		
