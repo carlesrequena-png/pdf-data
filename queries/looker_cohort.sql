@@ -3,7 +3,7 @@ with
 		select     		
 		    s.id,
 		    t.created_at::date as date,
-		    concat(extract(year FROM t.created_at),'-W',extract(week FROM t.created_at)) as week,
+		    TO_CHAR(DATE_TRUNC('week',t.created_at), 'DD') || '-' || TO_CHAR(DATE_TRUNC('week',t.created_at) + INTERVAL '6 days', 'DD Mon YYYY') || ' (W' || TO_CHAR(t.created_at, 'IW') || ')' as week,
 		   	c.ip_country
 		from pdfeditor.customers c
 		left join pdfeditor.transactions t 
@@ -58,3 +58,5 @@ select
 	sum (refunds) as refunds
 from recurrences
 group by 2,3,4
+
+		
