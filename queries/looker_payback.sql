@@ -101,7 +101,7 @@ with
 		    )::NUMERIC, 2) AS smart_d35_revenue
 		FROM user_activity ua
 		LEFT JOIN historical_ratios hr ON hr.ip_country = ua.ip_country
-		where ua.ip_country is not null
+		where ua.ip_country is not null and ua.ip_country in ('US','AU','CA','BR','GB','FR','ES','DE','IT')
 		GROUP BY 1, 2
 
 
