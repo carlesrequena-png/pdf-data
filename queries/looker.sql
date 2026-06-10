@@ -1,5 +1,5 @@
 select  
-	  	SUM(case when t.transaction_type = 0 and t.amount <5 then 1 else 0 end) as sales,
+	  	SUM(case when t.transaction_type = 0 and p.amount_trial = t.amount then 1 else 0 end) as sales,
 	  	t.created_at::date as date,
 	  	c.ip_country,
 	  	concat(extract(year FROM t.created_at),'-W',extract(week FROM t.created_at)) as week,
@@ -27,7 +27,7 @@ select
 	  	COALESCE(SUM(CASE WHEN t.transaction_type = 1 THEN t.amount ELSE 0 END), 0)::BIGINT AS amount_refunds
 	from customers c
 	left join transactions t 
-	on t.customer_id = c.id
+	on t.customer_id = c.id and t.transaction_status = 1
 	left join http_user_agents hua 
 	on hua.id = t.user_agent_id 
 	left join invoices_sii is2 
@@ -36,9 +36,10 @@ select
 	on s.id = t.subscription_id 
 	left join subscription_types st
 	on st.id = s.subscription_type_id 
+	left join prices p 
+	on p.id = st.price_id
 	where 
 		t.created_at::date >= '2026-01-01'
 		and email not like '%leadtech%'
-		and t.transaction_status = 1
 		and is2.invoice_number is not null
 	group by 2,3,4
