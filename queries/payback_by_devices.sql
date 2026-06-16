@@ -4,6 +4,7 @@ with
 		    s.id,
 		    coalesce(device,'Desktop') as device,
 		    t.created_at::date as cohort_date,
+		    hua.ip_country_iso_code as ip_country,
 			-- Conversion amount_recurrence
 		   	p.amount * CASE 
                 WHEN p.currency = 'EUR' THEN 1.0
@@ -44,6 +45,7 @@ with
 			i.id,
 			i.cohort_date,
 			i.device,
+			i.ip_country,
             i.amount_trial,
             i.amount_recurrence,
             --net revenue today
@@ -57,11 +59,12 @@ with
         WHERE 
             t.transaction_status = 1
             AND is2.invoice_number IS NOT NULL
-        GROUP BY 1, 2, 3, 4, 5
+        GROUP BY 1, 2, 3, 4, 5, 6
 		)
 		SELECT 
 		    ua.cohort_date,
 		    ua.device,
+		    ua.ip_country,
 		    COUNT(ua.id) AS new_sales,
 		    REPLACE(ROUND(SUM(
 		        CASE WHEN ua.recurrences = 0 THEN ua.amount_trial
@@ -70,4 +73,5 @@ with
 		             ELSE 0 END
 		    )::NUMERIC, 2)::TEXT, '.', ',') AS real_d35_revenue
 		FROM user_activity ua
-		GROUP BY 1,2
+		GROUP BY 1, 2, 3
+		
