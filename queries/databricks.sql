@@ -1,3 +1,5 @@
+--select * 
+--from bi.web_bi_dashboards.pdf_metrics
 with 
 	country_mapping AS (
 		select 
@@ -123,6 +125,7 @@ with
 				),
 			transactions_ranked as (
                 select
+					sc.id as subscription_id,
                     sc.cohort_date,
                     sc.ip_country,
                     sc.rate,
@@ -132,7 +135,9 @@ with
                     row_number() over (
                         partition by sc.id, t.transaction_type 
                         order by t.created_at
-                    ) as tx_rank
+                    ) as tx_rank,
+					sum(case when t.transaction_type = 0 then 1 else 0 end) over (partition by sc.id) as sub_charges,
+                    sum(case when t.transaction_type = 1 then 1 else 0 end) over (partition by sc.id) as sub_refunds
                 from sales_cohort sc
                 left join bronze.pdf.transactions t
                     ON sc.id = t.subscription_id
@@ -141,6 +146,8 @@ with
 		select
 			cohort_date,
 			ip_country,
+			sum(sub_charges) as charges, 
+			sum(sub_refunds) as refunds,
 			(
 				SUM(CASE WHEN transaction_type = 0 THEN amount ELSE 0 END / NULLIF(rate, 0)) 
 				- COALESCE(SUM(CASE WHEN transaction_type = 1 THEN amount ELSE 0 END / NULLIF(rate, 0)), 0)
@@ -148,7 +155,8 @@ with
 			(
                 SUM(CASE WHEN transaction_type = 0 AND tx_rank <= 3 THEN amount ELSE 0 END / NULLIF(rate, 0)) 
                 - COALESCE(SUM(CASE WHEN transaction_type = 1 AND created_at::date <= cohort_date + 37 THEN amount ELSE 0 END / NULLIF(rate, 0)), 0)
-            )::NUMERIC(10, 2) AS real_revenue_37d
+            )::NUMERIC(10, 2) AS real_revenue_37d,
+			count(distinct case when (sub_charges - sub_refunds) > 1 then subscription_id end) as first_renewals
 		from transactions_ranked
 		group by 1, 2
 		)
@@ -159,7 +167,7 @@ select
     coalesce(db.sales, 0) as sales,
 	coalesce(db.ltv, 0) as ltv,
     coalesce(db.user_revenue, 0) as user_revenue,    
-    coalesce(db.refunds, 0) as refunds,
+    --coalesce(db.refunds, 0) as refunds,
     coalesce(db.amount_refunds, 0) as amount_refunds,
     coalesce(a.landing_page_viewers, 0) as landing_page_viewers,
     coalesce(a.payment_page_viewers, 0) as payment_page_viewers,
@@ -167,6 +175,9 @@ select
     coalesce(a.usign_ups, 0) as usign_ups,
 	coalesce(pb.real_revenue, 0) as real_revenue,
 	coalesce(pb.real_revenue_37d, 0) as real_revenue_37d,
+	coalesce(pb.charges, 0) as charges,
+	coalesce(pb.refunds, 0) as refunds,
+	coalesce(pb.first_renewals, 0) as first_renewals,
 	sum(db.sales) over (partition by m.date) as grand_total_sales,
 	sum(s.spend) over (partition by m.date) as grand_total_spend
 from master_dim m
