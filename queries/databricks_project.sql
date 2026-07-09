@@ -18,6 +18,7 @@ WITH
         from gold.dm_web.money_movements m
         where merchant_id in('acct_1SD2VNCVUJnyBfx6','acct_1TQoWFClqJv8asWw','acct_1QSfJrEeDNlVSPsk','acct_1TN7CJCpi1ShflFN','acct_1TQoq8CbB8Drwc9S','acct_1TYnL9Ir47dcqvAx','acct_1TiU6PEdo9L76pmz')
         and status = 'succeeded'
+        and event_date >= '2026-01-01'
     ),
     sales as (
         select
@@ -219,10 +220,9 @@ select
 	sum(sa.sales) over (partition by m.date) as grand_total_sales,
 	sum(s.spend) over (partition by m.date) as grand_total_spend
 from master_dim m
-left join sem_spend s on m.date = s.date and m.ip_country = s.ip_country
-left join sales sa on m.date = sa.date and m.ip_country = sa.ip_country
-left join amplitude a on m.date = a.date and m.ip_country = a.ip_country
-left join payback pb on m.date = pb.cohort_date and m.ip_country = pb.ip_country
-order by spend DESC
+left join sem_spend s on m.date = s.date and m.ip_country = s.ip_country and m.site = s.site
+left join sales sa on m.date = sa.date and m.ip_country = sa.ip_country and m.site = sa.site
+left join amplitude a on m.date = a.date and m.ip_country = a.ip_country and m.site = a.site
+left join payback pb on m.date = pb.cohort_date and m.ip_country = pb.ip_country and m.site = pb.site
 
  
