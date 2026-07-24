@@ -119,7 +119,6 @@ for country in target_countries:
     base_curve = np.array(base_curves[country])
     
     # 4.1 Historical Scenario ($29.95)
-    # Get the sample size of historical users who had a chance to reach at least Month 1
     df_c_baseline = df_baseline[df_baseline['ip_country'] == country]
     eligible_baseline = df_c_baseline[df_c_baseline['account_age_days'] >= 15]
     
@@ -166,13 +165,9 @@ for country in target_countries:
             'N': len(eligible_r1_49)
         })
 
-# Convert final list to a standard Pandas DataFrame
+# Convert final list to a Pandas DataFrame and prepare for display
 df_output = pd.DataFrame(output_rows)
-
-# Force the LT_36m column to consistently display exactly two decimal places
 df_output['LT_36m'] = df_output['LT_36m'].map('{:.2f}'.format)
-
-# Ensure columns are in a logical order
 df_output = df_output[['Country', 'Price', 'LT_36m', 'N']]
 
 # Render results directly into the Databricks UI
